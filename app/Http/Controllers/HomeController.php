@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use DataTables;
 use App\User;
+use DB;
 
 class HomeController extends Controller
 {
@@ -24,24 +25,25 @@ class HomeController extends Controller
      * @return \Illuminate\Contracts\Support\Renderable
      */
     public function index(Request $request)
-    {
-        
-        // $data = User::paginate(10);
+    {   
+        //find total number of records in datatable
+        $recordsTotal = User::all()->count();
+        //define start and limit index
+        $startIndex = 0;
+        $limitIndex = 0;
         if ($request->ajax()) {
-            // return $request;
-            // return view('table')->with('data',$data);
-
-            $data = User::where('id','>',10000)->get();
-            // $data = DB::select
-            // return $data1 = array(
-            //     'draw' => 1,
-            //     'recordsTotal' => 97782,
-            //     'recordsFiltered' => 97782,
-            //     'data' => $data,
-            // );
+            $startIndex = $request->start;
+            $limitIndex = $request->length;
+            $data = DB::select("select * from users LIMIT $startIndex,$limitIndex");
+            $data1 = array(
+                'draw' => $request->draw,
+                'recordsTotal' => $recordsTotal,
+                'recordsFiltered' => $recordsTotal,
+                'data' => $data,
+            );
     
-            // return $data;
-            return Datatables::of($data)
+            return json_encode($data1);
+            $jsonData =  Datatables::of($data)
                     // ->addIndexColumn()
                     // ->addColumn('action', function($row){
    
@@ -51,6 +53,7 @@ class HomeController extends Controller
                     // })
                     // ->rawColumns(['action'])
                     ->make(true);
+            return $jsonData;
         }   
         return view('welcome');
     }
